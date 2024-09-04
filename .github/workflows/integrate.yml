@@ -1,0 +1,38 @@
+name: Update Excel Sheet with PR Data
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  update-sheet:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Extract PR Information
+      if: github.event.pull_request.merged == true
+      run: |
+        echo "Title,Merged At,Author" > pr_data.csv
+        echo "\"${{ github.event.pull_request.title }}\",\"${{ github.event.pull_request.merged_at }}\",\"${{ github.event.pull_request.user.login }}\"" >> pr_data.csv
+
+    - name: Upload CSV File
+      uses: actions/upload-artifact@v3
+      with:
+        name: pr-data
+        path: pr_data.csv
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
+
+    - name: Install Dependencies
+      run: |
+        pip install pandas openpyxl
+
+    - name: Update Excel
+      run: |
+        python update_excel.py
